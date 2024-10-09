@@ -4,6 +4,9 @@ import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
+import java.util.ArrayList;
+import java.util.Date;
+
 public class TinderBoltApp extends SimpleTelegramBot {
 
     public static final String TELEGRAM_BOT_TOKEN = "7721580519:AAGOaaDUs5Ha7G13mMMU9WVqUbs7is4h7aY"; //TODO: añadir el token del bot entre comillas
@@ -11,6 +14,7 @@ public class TinderBoltApp extends SimpleTelegramBot {
 
     private ChatGPTService chatGPT = new ChatGPTService(OPEN_AI_TOKEN);
     private DialogMode mode;
+    private ArrayList<String> list = new ArrayList<>();
 
     public TinderBoltApp() {
         super(TELEGRAM_BOT_TOKEN);
@@ -18,7 +22,7 @@ public class TinderBoltApp extends SimpleTelegramBot {
 
     //TODO: escribiremos la funcionalidad principal del bot aquí
 
-    public void iniciarcomando(){
+    public void iniciarComando(){
 
         mode = DialogMode.MAIN;
         String text = loadMessage("main");
@@ -35,7 +39,7 @@ public class TinderBoltApp extends SimpleTelegramBot {
         );
 
     }
-    public void GPTcomando(){
+    public void gptComando(){
         mode = DialogMode.GPT;
 
         String text = loadMessage("gpt");
@@ -43,20 +47,88 @@ public class TinderBoltApp extends SimpleTelegramBot {
         sendTextMessage(text);
 
     }
-    public void GPTDiaLog(){
+    public void gptDiaLog(){
 
         String text = getMessageText();
         String prompt = loadPrompt("gpt");
+        var myMessage = sendTextMessage("GPT esta escribiendo...");
         String answer = chatGPT.sendMessage(prompt, text);
-        sendTextMessage(answer);
+        // sendTextMessage(answer);
+        updateTextMessage(myMessage,answer);
 
     }
+    public void dateComando(){
+        mode = DialogMode.DATE;
 
+        String text = loadMessage("date");
+        sendPhotoMessage("date");
+        sendTextMessage(text);
+        sendTextButtonsMessage(text,
+                "date_grande", "Ariana Grande",
+                "date_weisz", "Rachel Weisz",
+                "date_won","Kim Ji-Won",
+                "date_fox","Megan Fox",
+                "date_romanoff","Natasha Romanoff");
+
+    }
+    public void dateButton(){
+        String key = getButtonKey();
+        sendPhotoMessage(key);
+        sendHtmlMessage(key);
+
+        String prompt = loadPrompt(key);
+        chatGPT.setPrompt(prompt);
+    }
+    public void dateDialog(){
+        String text = getMessageText();
+
+        var myMessage = sendTextMessage("el usuario esta escribiendo...");
+        String answer = chatGPT.addMessage(text);
+        //sendTextMessage(answer);
+        updateTextMessage(myMessage,answer);
+    }
+    public void messageComando(){
+        mode = DialogMode.MESSAGE;
+
+        String text = loadMessage("message");
+        sendPhotoMessage("message");
+        sendTextButtonsMessage(text,
+                "message_next", "Escribe nuevo mensaje",
+                "message_date", "Invita a alguien a salir en una cita");
+
+        list.clear();
+
+    }
+    public void messageButton(){
+        String key = getButtonKey();
+        //sendPhotoMessage(key);
+       // sendHtmlMessage(key);
+
+        String prompt = loadPrompt(key);
+        String history = String.join("\n\n",list);
+        var myMessage = sendTextMessage("CHAT GPT esta escribiendo...");
+        String answer = chatGPT.sendMessage(prompt, history);
+        updateTextMessage(myMessage,answer);
+
+
+    }
+    public void messageDialog(){
+        String text = getMessageText();
+
+
+
+        list.add(text);
+        //sendTextMessage(answer);
+    }
 
     public void hola(){
 
         if (mode == DialogMode.GPT){
-            GPTDiaLog();
+            gptDiaLog();
+        } else if (mode == DialogMode.DATE) {
+            dateDialog();
+        } else if (mode == DialogMode.MESSAGE) {
+            messageDialog();
         } else {
 
             String text = getMessageText();
@@ -70,7 +142,7 @@ public class TinderBoltApp extends SimpleTelegramBot {
         }
     }
 
-    public void HolaButton(){
+    public void holaButton(){
         String key = getButtonKey();
         if (key.equals("Start")){
             sendTextMessage("Empezando");
@@ -82,11 +154,14 @@ public class TinderBoltApp extends SimpleTelegramBot {
     @Override
     public void onInitialize() {
         //TODO: y un poco más aquí :)
-        addCommandHandler("start",this::iniciarcomando);
-        addCommandHandler("gpt",this::GPTcomando);
+        addCommandHandler("start",this::iniciarComando);
+        addCommandHandler("gpt",this::gptComando);
+        addCommandHandler("date",this::dateComando);
+        addCommandHandler("message",this::messageComando);
         addMessageHandler(this::hola);
-        addButtonHandler("^.*",this::HolaButton);
-
+        // addButtonHandler("^.*",this::holaButton);
+        addButtonHandler("^date_.*",this::dateButton);
+        addButtonHandler("^message_.*",this::messageButton);
     }
 
     public static void main(String[] args) throws TelegramApiException {
