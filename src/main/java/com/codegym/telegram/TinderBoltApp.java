@@ -120,6 +120,89 @@ public class TinderBoltApp extends SimpleTelegramBot {
         list.add(text);
         //sendTextMessage(answer);
     }
+    public void profileComando(){
+        mode = DialogMode.PROFILE;
+
+        String text = loadMessage("profile");
+        sendPhotoMessage("profile");
+        sendTextMessage(text);
+
+        sendTextMessage("Dime tu nombre: ");
+
+        user = new UserInfo();
+        questionCount = 0;
+
+    }
+        private UserInfo user = new UserInfo();
+        private int questionCount = 0;
+
+    public void profileDiaLog(){
+
+        String text = getMessageText();
+        questionCount++;
+
+        if(questionCount==1){
+            user.name = text;
+            sendTextMessage("Cual es tu edad: ");
+        } else if (questionCount==2) {
+            user.age = text;
+            sendTextMessage("Ahora dime tu hobby favorito: ");
+        } else if (questionCount==3) {
+            user.hobby = text;
+            sendTextMessage("Cual es tu proposito: ");
+        } else if (questionCount==4) {
+            user.goals = text;
+
+        String prompt = loadPrompt("profile");
+        String userInfo = user.toString();
+        var myMessage = sendTextMessage("GPT esta escribiendo...");
+        String answer = chatGPT.sendMessage(prompt, userInfo);
+        // sendTextMessage(answer);
+        updateTextMessage(myMessage,answer);
+
+        }
+    }
+
+    public void openerComando(){
+        mode = DialogMode.OPENER;
+
+        String text = loadMessage("opener");
+        sendPhotoMessage("opener");
+        sendTextMessage(text);
+
+        sendTextMessage("Cual es nombre: ");
+        user = new UserInfo();
+        questionCount = 0;
+
+    }
+
+
+    public void openerDiaLog(){
+
+        String text = getMessageText();
+        questionCount++;
+
+        if(questionCount==1){
+            user.name = text;
+            sendTextMessage("Su edad: ");
+        } else if (questionCount==2) {
+            user.age = text;
+            sendTextMessage("En que trabaja: ");
+        } else if (questionCount==3) {
+            user.occupation = text;
+            sendTextMessage("Del 1 - 10 , Que tan atractiva es: ");
+        } else if (questionCount==4) {
+            user.handsome = text;
+
+            String prompt = loadPrompt("opener");
+            String userInfo = user.toString();
+            var myMessage = sendTextMessage("GPT esta escribiendo...");
+            String answer = chatGPT.sendMessage(prompt, userInfo);
+            // sendTextMessage(answer);
+            updateTextMessage(myMessage,answer);
+
+        }
+    }
 
     public void hola(){
 
@@ -129,6 +212,10 @@ public class TinderBoltApp extends SimpleTelegramBot {
             dateDialog();
         } else if (mode == DialogMode.MESSAGE) {
             messageDialog();
+        } else if (mode == DialogMode.PROFILE) {
+            profileDiaLog();
+        } else if (mode == DialogMode.OPENER) {
+            openerDiaLog();
         } else {
 
             String text = getMessageText();
@@ -158,6 +245,8 @@ public class TinderBoltApp extends SimpleTelegramBot {
         addCommandHandler("gpt",this::gptComando);
         addCommandHandler("date",this::dateComando);
         addCommandHandler("message",this::messageComando);
+        addCommandHandler("profile",this::profileComando);
+        addCommandHandler("opener",this::openerComando);
         addMessageHandler(this::hola);
         // addButtonHandler("^.*",this::holaButton);
         addButtonHandler("^date_.*",this::dateButton);
